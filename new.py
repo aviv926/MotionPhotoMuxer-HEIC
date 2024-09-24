@@ -183,7 +183,9 @@ def process_file(file_path, output_dir, move_other_images, convert_all_heic, del
             else:
                 shutil.move(file_path, saved_heic_dir)
 
-def process_file_wrapper(file, output_dir, move_other_images, convert_all_heic, delete_converted, converted_heic_dir, error_dir, saved_heic_dir):
+def process_file_wrapper(args):
+    """Unpack the tuple of arguments and call process_file."""
+    file, output_dir, move_other_images, convert_all_heic, delete_converted, converted_heic_dir, error_dir, saved_heic_dir = args
     return process_file(file, output_dir, move_other_images, convert_all_heic, delete_converted, converted_heic_dir, error_dir, saved_heic_dir)
 
 def process_directory(input_dir, output_dir, move_other_images, convert_all_heic, delete_converted):
