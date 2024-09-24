@@ -170,10 +170,6 @@ def convert_heic_to_jpeg(heic_path, converted_heic_dir, error_dir):
         shutil.move(heic_path, error_file_path)
         return None
 
-def process_file_multiprocessing(args):
-    file_path, output_dir, move_other_images, convert_all_heic, delete_converted, converted_heic_dir, error_dir, saved_heic_dir = args
-    process_file(file_path, output_dir, move_other_images, convert_all_heic, delete_converted, converted_heic_dir, error_dir, saved_heic_dir)
-
 def process_file(file_path, output_dir, move_other_images, convert_all_heic, delete_converted, converted_heic_dir, error_dir, saved_heic_dir):
     # Similar logic as before, now with multiprocessing support
     if file_path.lower().endswith('.heic'):
@@ -186,6 +182,9 @@ def process_file(file_path, output_dir, move_other_images, convert_all_heic, del
                 os.remove(file_path)
             else:
                 shutil.move(file_path, saved_heic_dir)
+
+def process_file_wrapper(file, output_dir, move_other_images, convert_all_heic, delete_converted, converted_heic_dir, error_dir, saved_heic_dir):
+    return process_file(file, output_dir, move_other_images, convert_all_heic, delete_converted, converted_heic_dir, error_dir, saved_heic_dir)
 
 def process_directory(input_dir, output_dir, move_other_images, convert_all_heic, delete_converted):
     logging.info("Processing files in: {}".format(input_dir))
@@ -209,7 +208,7 @@ def process_directory(input_dir, output_dir, move_other_images, convert_all_heic
 
     # Use multiprocessing with progress bar
     with Pool(cpu_count()) as pool:
-        for _ in tqdm(pool.imap_unordered(process_file_multiprocessing, process_args), total=len(files_to_process)):
+        for _ in tqdm(pool.imap_unordered(process_file_wrapper, process_args), total=len(files_to_process)):
             pass
 
     logging.info("Processing complete. {} files processed.".format(len(processed_files)))
