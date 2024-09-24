@@ -9,6 +9,8 @@ from PIL import Image
 from tqdm import tqdm  # for progress bar
 from multiprocessing import Pool, cpu_count
 import time
+from multiprocessing import Pool, cpu_count
+from tqdm import tqdm
 
 problematic_files = []
 processed_files = []
@@ -168,6 +170,10 @@ def convert_heic_to_jpeg(heic_path, converted_heic_dir, error_dir):
         shutil.move(heic_path, error_file_path)
         return None
 
+def process_file_multiprocessing(args):
+    file_path, output_dir, move_other_images, convert_all_heic, delete_converted, converted_heic_dir, error_dir, saved_heic_dir = args
+    process_file(file_path, output_dir, move_other_images, convert_all_heic, delete_converted, converted_heic_dir, error_dir, saved_heic_dir)
+
 def process_file(file_path, output_dir, move_other_images, convert_all_heic, delete_converted, converted_heic_dir, error_dir, saved_heic_dir):
     # Similar logic as before, now with multiprocessing support
     if file_path.lower().endswith('.heic'):
@@ -198,9 +204,12 @@ def process_directory(input_dir, output_dir, move_other_images, convert_all_heic
             file_path = os.path.join(root, file)
             files_to_process.append(file_path)
 
+    # Prepare arguments for multiprocessing
+    process_args = [(file, output_dir, move_other_images, convert_all_heic, delete_converted, converted_heic_dir, error_dir, saved_heic_dir) for file in files_to_process]
+
     # Use multiprocessing with progress bar
     with Pool(cpu_count()) as pool:
-        for _ in tqdm(pool.imap_unordered(lambda f: process_file(f, output_dir, move_other_images, convert_all_heic, delete_converted, converted_heic_dir, error_dir, saved_heic_dir), files_to_process), total=len(files_to_process)):
+        for _ in tqdm(pool.imap_unordered(process_file_multiprocessing, process_args), total=len(files_to_process)):
             pass
 
     logging.info("Processing complete. {} files processed.".format(len(processed_files)))
